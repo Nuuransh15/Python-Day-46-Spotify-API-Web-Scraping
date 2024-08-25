@@ -1,7 +1,11 @@
+import os
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import re
+from dotenv import load_dotenv
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
 
 valid_date_pattern = r"^\d{4}-\d{2}-\d{2}$"
 URL = "https://www.billboard.com/charts/hot-100/"
@@ -66,6 +70,12 @@ if is_valid_date(user_date_input):
 
     # Find the song name within each song item within the list
     top_100_list = [entry.find(name="h3", id="title-of-a-story").getText().strip() for entry in songs_list_full_details]
-    print(top_100_list)
-    print(len(top_100_list))
-    assert len(top_100_list) == 100
+
+    # Load the environment variables (Client ID and secret)
+    load_dotenv()
+
+    scope = "playlist-modify-private"
+    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
+
+    user_data = sp.current_user()
+    print(user_data)
