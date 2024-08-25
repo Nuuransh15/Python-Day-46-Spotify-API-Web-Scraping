@@ -1,4 +1,6 @@
 import json
+import os
+
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -91,11 +93,26 @@ def spotipy_operations(track_list: list, uris: list, input_date: str):
     # Load the environment variables (Client ID and secret)
     load_dotenv()
 
-    # Create authenticated spotify client instance
+    # Create authenticated spotify client instance with scope to allow user to create a private playlist
     scope = "playlist-modify-private"
     sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 
     spotipy_search(sp, track_list, uris)
+
+    playlist_name = f"{input_date} Billboard 100"
+
+    # create a new playlist and store the metadata returned upon creation
+    playlist_metadata = sp.user_playlist_create(user=os.getenv("USER_ID"),
+                                                name=playlist_name,
+                                                public=False,
+                                                description="Playlist created for Python Day 46")
+
+    # add the track uris from the spotify search to the newly created playlist
+    sp.playlist_add_items(playlist_id=playlist_metadata["uri"], items=uris)
+
+    # NOTE! To fetch the user's created playlist, set the scope to "playlist-read-private" and then run this code:
+    # my_playlists = sp.user_playlists(user=os.getenv("USER_ID"))
+    # print(my_playlists)
 
 
 # ------------------------------ MAIN EXECUTION ------------------------------ #
@@ -113,5 +130,3 @@ if is_valid_date(user_date_input):
 
     track_uris = []
     spotipy_operations(top_100_list, track_uris, user_date_input)
-
-
