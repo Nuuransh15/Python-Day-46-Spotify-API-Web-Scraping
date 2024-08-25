@@ -1,4 +1,4 @@
-import os
+import json
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -58,6 +58,46 @@ def get_website_soup(target_url):
     return soup
 
 
+def spotipy_search(sp: spotipy.Spotify, track_list: list, uris: list):
+    """
+    Searches for tracks on Spotify and appends their URIs to a provided list.
+    :param sp: The authenticated Spotipy Spotify client instance
+    :param track_list: A list of track names (strings) to search for on Spotify.
+    :param uris: A list to hold the URIs of searched tracks.
+    :return:
+    """
+    for track in track_list:
+        query = f"track:{track}"
+
+        # Perform the search on Spotify using the Spotipy client
+        response = sp.search(q=query, type="track")
+
+        try:
+            # Attempt to extract the URI of first search result item
+            track_uri = response["tracks"]["items"][0]["uri"]
+        except KeyError:
+            # If key error occurs - no items were found
+            print(f"No URI results found in search for Track: {track}")
+        else:
+            uris.append(track_uri)
+
+
+def spotipy_operations(track_list: list, uris: list, input_date: str):
+    """
+    Function to authenticate user into their spotify development application and create a list of Spotify
+    song URIs for the list of song names found from the top 100 billboard search.
+    :return:
+    """
+    # Load the environment variables (Client ID and secret)
+    load_dotenv()
+
+    # Create authenticated spotify client instance
+    scope = "playlist-modify-private"
+    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
+
+    spotipy_search(sp, track_list, uris)
+
+
 # ------------------------------ MAIN EXECUTION ------------------------------ #
 user_date_input = input("Which year do you want to travel to? Type the date in this format YYYY-MM-DD:")
 
@@ -71,11 +111,7 @@ if is_valid_date(user_date_input):
     # Find the song name within each song item within the list
     top_100_list = [entry.find(name="h3", id="title-of-a-story").getText().strip() for entry in songs_list_full_details]
 
-    # Load the environment variables (Client ID and secret)
-    load_dotenv()
+    track_uris = []
+    spotipy_operations(top_100_list, track_uris, user_date_input)
 
-    scope = "playlist-modify-private"
-    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 
-    user_data = sp.current_user()
-    print(user_data)
