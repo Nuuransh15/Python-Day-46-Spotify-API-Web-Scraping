@@ -78,6 +78,9 @@ def spotipy_search(sp: spotipy.Spotify, track_list: list, uris: list):
         except KeyError:
             # If key error occurs - no items were found
             print(f"No URI results found in search for Track: {track}")
+        except IndexError:
+            # If index error occurs - also no items were found
+            print(f"No URI results found in search for Track: {track}")
         else:
             uris.append(track_uri)
 
@@ -105,8 +108,11 @@ def spotipy_operations(track_list: list, uris: list, input_date: str):
                                                 public=False,
                                                 description="Playlist created for Python Day 46")
 
-    # add the track uris from the spotify search to the newly created playlist
-    sp.playlist_add_items(playlist_id=playlist_metadata["uri"], items=uris)
+    if len(uris) > 0:
+        # add the track uris from the spotify search to the newly created playlist
+        sp.playlist_add_items(playlist_id=playlist_metadata["uri"], items=uris)
+    else:
+        print(f"No data found for songs in {user_date_input}, created an empty playlist instead.")
 
     # NOTE! To fetch the user's created playlist, set the scope to "playlist-read-private" and then run this code:
     # my_playlists = sp.user_playlists(user=os.getenv("USER_ID"))
